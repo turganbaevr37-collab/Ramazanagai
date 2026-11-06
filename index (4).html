@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthPulse — Трекинг Здоровья и Активности</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            cyan: '#06b6d4',
+                            blue: '#3b82f6',
+                            purple: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom Liquid Animation for Water Glass */
+        .water-wave {
+            background: linear-gradient(180deg, rgba(6,182,212,0.8) 0%, rgba(59,130,246,0.9) 100%);
+            transition: height 0.5s ease-in-out;
+        }
+        
+        /* Smooth transitions */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Glassmorphism effects */
+        .glass-card {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col md:flex-row antialiased selection:bg-emerald-500 selection:text-white transition-colors duration-300">
+
+    <!-- Sidebar / Navigation -->
+    <aside class="w-full md:w-64 bg-white/80 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 sticky top-0 z-40 glass-card">
+        <div class="p-5 flex items-center justify-between md:justify-start space-x-3 border-b border-slate-200 dark:border-slate-800">
+            <div class="bg-gradient-to-tr from-emerald-500 to-cyan-500 p-2.5 rounded-xl text-white shadow-lg shadow-emerald-500/20">
+                <i data-lucide="activity" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">HealthPulse</h1>
+                <p class="text-xs text-slate-400 dark:text-slate-500">Мониторинг здоровья</p>
+            </div>
+            <button id="themeToggleMobile" class="md:hidden p-2 text-slate-500 hover:text-emerald-500 rounded-lg">
+                <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+            </button>
+        </div>
+
+        <!-- Nav Links -->
+        <nav class="p-4 space-y-1 overflow-x-auto md:overflow-visible flex md:flex-col flex-row justify-between md:justify-start">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all w-full text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="whitespace-nowrap">Обзор</span>
+            </button>
+            <button onclick="switchTab('nutrition')" id="nav-nutrition" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all w-full">
+                <i data-lucide="utensils" class="w-5 h-5"></i>
+                <span class="whitespace-nowrap">Питание</span>
+            </button>
+            <button onclick="switchTab('sleep')" id="nav-sleep" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all w-full">
+                <i data-lucide="moon" class="w-5 h-5"></i>
+                <span class="whitespace-nowrap">Сон</span>
+            </button>
+            <button onclick="switchTab('bmi')" id="nav-bmi" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all w-full">
+                <i data-lucide="calculator" class="w-5 h-5"></i>
+                <span class="whitespace-nowrap">ИМТ Калькулятор</span>
+            </button>
+            <button onclick="switchTab('habits')" id="nav-habits" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all w-full">
+                <i data-lucide="check-square" class="w-5 h-5"></i>
+                <span class="whitespace-nowrap">Привычки</span>
+            </button>
+        </nav>
+
+        <!-- Dark/Light Mode Footer (Desktop) -->
+        <div class="hidden md:block absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-800">
+            <button id="themeToggle" class="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                <span class="flex items-center space-x-2">
+                    <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                    <span id="themeLabel">Темная тема</span>
+                </span>
+                <div class="w-8 h-4 bg-slate-300 dark:bg-emerald-600 rounded-full relative transition-colors">
+                    <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5 dark:left-4 transition-all"></div>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6 overflow-y-auto">
+
+        <!-- Top Status Bar / Header -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm glass-card">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white" id="greetingText">Добрый день! 👋</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="currentDate">Сегодня, 6 ноября 2026 г.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="resetDayData()" class="text-xs px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 dark:bg-slate-800 dark:hover:bg-red-950/50 dark:text-slate-400 dark:hover:text-red-400 transition-colors flex items-center space-x-1.5 border border-slate-200 dark:border-slate-700">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>Сброс дня</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content active space-y-6">
+            
+            <!-- Key Metrics Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Steps Card -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Шаги</span>
+                        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl">
+                            <i data-lucide="footprints" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-extrabold" id="dashStepsVal">0</span>
+                            <span class="text-xs text-slate-400">/ <span id="dashStepsGoal">10000</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                            <div id="dashStepsBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Water Card -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Вода</span>
+                        <div class="p-2 bg-cyan-50 dark:bg-cyan-950/50 text-cyan-500 rounded-xl">
+                            <i data-lucide="droplet" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-extrabold" id="dashWaterVal">0</span>
+                            <span class="text-xs text-slate-400">мл / <span id="dashWaterGoal">2500</span> мл</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                            <div id="dashWaterBar" class="bg-cyan-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calories Card -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Калории</span>
+                        <div class="p-2 bg-orange-50 dark:bg-orange-950/50 text-orange-500 rounded-xl">
+                            <i data-lucide="flame" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-extrabold" id="dashCalVal">0</span>
+                            <span class="text-xs text-slate-400">ккал / <span id="dashCalGoal">2200</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                            <div id="dashCalBar" class="bg-orange-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleep Card -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Сон</span>
+                        <div class="p-2 bg-purple-50 dark:bg-purple-950/50 text-purple-500 rounded-xl">
+                            <i data-lucide="moon" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-extrabold" id="dashSleepVal">0</span>
+                            <span class="text-xs text-slate-400">ч / <span id="dashSleepGoal">8</span> ч</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                            <div id="dashSleepBar" class="bg-purple-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Interactive Water & Steps Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Water Bottle Graphic & Quick Add -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center space-x-2">
+                            <i data-lucide="droplet" class="w-5 h-5 text-cyan-500"></i>
+                            <span>Водный Баланс</span>
+                        </h3>
+                        <span id="waterPercentage" class="text-sm font-semibold text-cyan-500 bg-cyan-50 dark:bg-cyan-950/60 px-3 py-1 rounded-full">0%</span>
+                    </div>
+
+                    <div class="flex items-center justify-center my-6 space-x-8">
+                        <!-- Glass Animated Visual -->
+                        <div class="relative w-28 h-44 border-4 border-slate-300 dark:border-slate-700 rounded-b-3xl rounded-t-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shadow-inner flex flex-col justify-end">
+                            <div id="waterLiquid" class="water-wave w-full h-0 relative">
+                                <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                            </div>
+                            <div class="absolute inset-0 flex items-center justify-center font-bold text-slate-700 dark:text-white drop-shadow-md text-lg pointer-events-none">
+                                <span id="glassWaterText">0 мл</span>
+                            </div>
+                        </div>
+
+                        <!-- Add Buttons -->
+                        <div class="flex flex-col space-y-3">
+                            <button onclick="addWater(250)" class="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-600 active:scale-95 text-white font-medium text-sm rounded-xl transition-all shadow-md shadow-cyan-500/20 flex items-center space-x-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>+250 мл (Стакан)</span>
+                            </button>
+                            <button onclick="addWater(500)" class="px-4 py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-medium text-sm rounded-xl transition-all border border-cyan-500/20 flex items-center space-x-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>+500 мл (Бутылка)</span>
+                            </button>
+                            <button onclick="addWater(-250)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-medium text-xs rounded-xl transition-all flex items-center justify-center space-x-1">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                                <span>Убавить 250 мл</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-slate-400 text-center">
+                        Рекомендуемая дневная норма рассчитана на среднюю активность.
+                    </div>
+                </div>
+
+                <!-- Step Counter Quick Update & Activity -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center space-x-2">
+                            <i data-lucide="footprints" class="w-5 h-5 text-emerald-500"></i>
+                            <span>Активность за день</span>
+                        </h3>
+                        <span id="caloriesBurnedText" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full">~0 ккал сожжено</span>
+                    </div>
+
+                    <form id="stepsForm" onsubmit="updateSteps(event)" class="space-y-4 my-auto">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Добавить пройденные шаги</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="stepInput" placeholder="Например: 1500" min="1" required class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-medium px-6 py-3 rounded-xl transition-all shadow-md shadow-emerald-500/20 text-sm flex items-center space-x-1">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Добавить</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Preset Step Buttons -->
+                        <div class="flex space-x-2 pt-2">
+                            <button type="button" onclick="quickAddSteps(1000)" class="flex-1 py-2 bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-950/40 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium transition-colors">+1 000</button>
+                            <button type="button" onclick="quickAddSteps(3000)" class="flex-1 py-2 bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-950/40 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium transition-colors">+3 000</button>
+                            <button type="button" onclick="quickAddSteps(5000)" class="flex-1 py-2 bg-slate-100 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-950/40 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium transition-colors">+5 000</button>
+                        </div>
+                    </form>
+
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between text-xs text-slate-400">
+                        <span>Цель: 10 000 шагов</span>
+                        <span id="distanceKm">0.0 км</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Canvas Weekly Chart Section -->
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white">Статистика активности за неделю</h3>
+                        <p class="text-xs text-slate-400">Шаги за последние 7 дней</p>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs font-medium">
+                        <span class="inline-block w-3 h-3 bg-emerald-500 rounded-full"></span>
+                        <span class="text-slate-600 dark:text-slate-400">Пройденные шаги</span>
+                    </div>
+                </div>
+                <div class="w-full h-64 relative">
+                    <canvas id="weeklyChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- TAB 2: NUTRITION -->
+        <section id="tab-nutrition" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Macro Breakdown Header Card -->
+                <div class="lg:col-span-3 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-4">Баланс КБЖУ (Макронутриенты)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        
+                        <!-- Protein Bar -->
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="text-slate-500">Белки</span>
+                                <span class="text-emerald-500" id="proteinText">0g / 120g</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                                <div id="proteinBar" class="bg-emerald-500 h-full rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Carbs Bar -->
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="text-slate-500">Углеводы</span>
+                                <span class="text-amber-500" id="carbsText">0g / 250g</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                                <div id="carbsBar" class="bg-amber-500 h-full rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fats Bar -->
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span class="text-slate-500">Жиры</span>
+                                <span class="text-rose-500" id="fatsText">0g / 70g</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                                <div id="fatsBar" class="bg-rose-500 h-full rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Add Meal Form -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-orange-500"></i>
+                        <span>Добавить прием пищи</span>
+                    </h3>
+
+                    <form id="mealForm" onsubmit="addMeal(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Название блюда</label>
+                            <input type="text" id="mealName" placeholder="Овсянка с бананом" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Калории (ккал)</label>
+                                <input type="number" id="mealCal" placeholder="350" required min="1" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Белки (г)</label>
+                                <input type="number" id="mealProtein" placeholder="12" min="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Углеводы (г)</label>
+                                <input type="number" id="mealCarbs" placeholder="50" min="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Жиры (г)</label>
+                                <input type="number" id="mealFats" placeholder="8" min="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-medium rounded-xl transition-all shadow-md shadow-orange-500/20 text-sm mt-2">
+                            Записать прием пищи
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Meal Log List -->
+                <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-4">Дневник питания за сегодня</h3>
+                    <div id="mealList" class="space-y-3 flex-1 overflow-y-auto max-h-[350px] pr-1">
+                        <!-- Dynamic Meals Inserted Here -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 3: SLEEP -->
+        <section id="tab-sleep" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Sleep Entry Form -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center space-x-2">
+                        <i data-lucide="moon" class="w-5 h-5 text-purple-500"></i>
+                        <span>Запись о сне</span>
+                    </h3>
+
+                    <form id="sleepForm" onsubmit="logSleep(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Продолжительность (часов)</label>
+                            <input type="number" step="0.5" id="sleepHours" placeholder="7.5" min="1" max="24" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-2">Качество сна</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" onclick="selectSleepQuality('Плохое', this)" class="sleep-qual-btn p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-purple-500 text-xs font-medium transition-all">
+                                    😴 Плохое
+                                </button>
+                                <button type="button" onclick="selectSleepQuality('Нормальное', this)" class="sleep-qual-btn active p-3 rounded-xl border border-purple-500 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 text-center text-xs font-medium transition-all">
+                                    😊 Норм
+                                </button>
+                                <button type="button" onclick="selectSleepQuality('Отличное', this)" class="sleep-qual-btn p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-purple-500 text-xs font-medium transition-all">
+                                    🤩 Отличное
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-medium rounded-xl transition-all shadow-md shadow-purple-600/20 text-sm">
+                            Сохранить сон
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Sleep Log Chart -->
+                <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-1">История сна за неделю</h3>
+                        <p class="text-xs text-slate-400 mb-4">График продолжительности сна (в часах)</p>
+                    </div>
+                    <div class="w-full h-60 relative">
+                        <canvas id="sleepChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 4: BMI CALCULATOR -->
+        <section id="tab-bmi" class="tab-content space-y-6">
+            <div class="max-w-2xl mx-auto bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                        <i data-lucide="calculator" class="w-6 h-6 text-emerald-500"></i>
+                        <span>Калькулятор Индекса Массы Тела (ИМТ)</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Рассчитайте соотношение массы тела и роста для оценки здоровья.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Рост (см)</label>
+                        <input type="number" id="bmiHeight" placeholder="175" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Вес (кг)</label>
+                        <input type="number" id="bmiWeight" placeholder="70" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <button onclick="calculateBMI()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-medium rounded-xl transition-all shadow-md shadow-emerald-500/20">
+                    Рассчитать ИМТ
+                </button>
+
+                <!-- BMI Result Display -->
+                <div id="bmiResultCard" class="hidden p-6 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-medium text-slate-400 uppercase">Ваш ИМТ</span>
+                            <div class="text-4xl font-extrabold text-slate-900 dark:text-white" id="bmiValue">22.9</div>
+                        </div>
+                        <div id="bmiCategoryBadge" class="px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                            Нормальный вес
+                        </div>
+                    </div>
+
+                    <!-- BMI Visual Meter -->
+                    <div class="space-y-1">
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 h-3 rounded-full relative overflow-hidden flex">
+                            <div class="w-1/4 bg-blue-400" title="Дефицит"></div>
+                            <div class="w-1/4 bg-emerald-500" title="Норма"></div>
+                            <div class="w-1/4 bg-amber-400" title="Избыток"></div>
+                            <div class="w-1/4 bg-rose-500" title="Ожирение"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-400 px-1">
+                            <span>16.0</span>
+                            <span>18.5</span>
+                            <span>25.0</span>
+                            <span>30.0</span>
+                            <span>40.0</span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" id="bmiAdviceText">
+                        Ваш вес находится в пределах нормы. Продолжайте поддерживать здоровый образ жизни и сбалансированное питание!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: HABITS -->
+        <section id="tab-habits" class="tab-content space-y-6">
+            <div class="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                            <i data-lucide="check-square" class="w-6 h-6 text-emerald-500"></i>
+                            <span>Ежедневные Полезные Привычки</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Отмечайте выполнение привычек каждый день для сохранения серии!</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400">Серия (Streak)</span>
+                        <div class="text-lg font-bold text-amber-500 flex items-center justify-end space-x-1">
+                            <i data-lucide="flame" class="w-4 h-4 fill-amber-500"></i>
+                            <span id="streakDays">5 дней</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Habits List -->
+                <div id="habitsList" class="space-y-3">
+                    <!-- Dynamic Habits Rendered Here -->
+                </div>
+
+                <!-- Add Custom Habit Form -->
+                <form id="addHabitForm" onsubmit="addNewHabit(event)" class="flex space-x-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <input type="text" id="newHabitInput" placeholder="Новая привычка (напр. Утренняя зарядка)" required class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-500/20">
+                        Добавить
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- APP STATE & INITIALIZATION ---
+        const defaultState = {
+            theme: 'dark',
+            water: 0,
+            waterGoal: 2500,
+            steps: 0,
+            stepsGoal: 10000,
+            sleep: 0,
+            sleepGoal: 8,
+            sleepQuality: 'Нормальное',
+            caloriesGoal: 2200,
+            proteinGoal: 120,
+            carbsGoal: 250,
+            fatsGoal: 70,
+            meals: [],
+            weeklySteps: [4500, 7200, 10100, 8900, 6400, 11200, 0],
+            weeklySleep: [7, 6.5, 8, 7.5, 6, 8.5, 0],
+            habits: [
+                { id: 1, title: 'Утренняя разминка 10 минут', completed: false },
+                { id: 2, title: 'Выпить 1 стакан воды после пробуждения', completed: false },
+                { id: 3, title: 'Чтение книги 20 минут', completed: false },
+                { id: 4, title: 'Отказ от сахара вечером', completed: false }
+            ],
+            streak: 5
+        };
+
+        let state = JSON.parse(localStorage.getItem('healthPulseState')) || defaultState;
+
+        // Save State
+        function saveState() {
+            localStorage.setItem('healthPulseState', JSON.stringify(state));
+            updateDashboardUI();
+        }
+
+        // Initialize Application on Load
+        window.onload = function() {
+            lucide.createIcons();
+            initTheme();
+            updateDashboardUI();
+            renderMeals();
+            renderHabits();
+            drawWeeklyChart();
+            drawSleepChart();
+            updateCurrentDate();
+        };
+
+        // --- DATE & GREETING ---
+        function updateCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('ru-RU', options);
+            document.getElementById('currentDate').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        }
+
+        // --- THEME TOGGLE ---
+        function initTheme() {
+            if (state.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            initTheme();
+            saveState();
+            // Redraw canvas charts to adjust color scheme
+            drawWeeklyChart();
+            drawSleepChart();
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        document.getElementById('themeToggleMobile').addEventListener('click', toggleTheme);
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-50', 'dark:bg-emerald-950/50');
+                btn.classList.add('text-slate-600', 'dark:text-slate-400');
+            });
+
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            const targetBtn = document.getElementById(`nav-${tabId}`);
+            
+            if (targetTab && targetBtn) {
+                targetTab.classList.add('active');
+                targetBtn.classList.add('active', 'text-emerald-600', 'dark:text-emerald-400', 'bg-emerald-50', 'dark:bg-emerald-950/50');
+            }
+
+            // Redraw Canvas Charts if tab becomes visible
+            if (tabId === 'dashboard') setTimeout(drawWeeklyChart, 50);
+            if (tabId === 'sleep') setTimeout(drawSleepChart, 50);
+        }
+
+        // --- DASHBOARD UI UPDATES ---
+        function updateDashboardUI() {
+            // Steps
+            document.getElementById('dashStepsVal').innerText = state.steps.toLocaleString('ru-RU');
+            document.getElementById('dashStepsGoal').innerText = state.stepsGoal.toLocaleString('ru-RU');
+            const stepsPct = Math.min(100, Math.round((state.steps / state.stepsGoal) * 100));
+            document.getElementById('dashStepsBar').style.width = `${stepsPct}%`;
+            
+            // Distance & Calories burned estimation
+            const km = (state.steps * 0.00075).toFixed(1);
+            const burnedCal = Math.round(state.steps * 0.04);
+            document.getElementById('distanceKm').innerText = `${km} км`;
+            document.getElementById('caloriesBurnedText').innerText = `~${burnedCal} ккал сожжено`;
+
+            // Water
+            document.getElementById('dashWaterVal').innerText = state.water;
+            document.getElementById('dashWaterGoal').innerText = state.waterGoal;
+            const waterPct = Math.min(100, Math.round((state.water / state.waterGoal) * 100));
+            document.getElementById('dashWaterBar').style.width = `${waterPct}%`;
+            document.getElementById('waterPercentage').innerText = `${waterPct}%`;
+            document.getElementById('glassWaterText').innerText = `${state.water} мл`;
+            document.getElementById('waterLiquid').style.height = `${waterPct}%`;
+
+            // Calories & Macros
+            const totalCalories = state.meals.reduce((sum, m) => sum + m.calories, 0);
+            const totalProtein = state.meals.reduce((sum, m) => sum + m.protein, 0);
+            const totalCarbs = state.meals.reduce((sum, m) => sum + m.carbs, 0);
+            const totalFats = state.meals.reduce((sum, m) => sum + m.fats, 0);
+
+            document.getElementById('dashCalVal').innerText = totalCalories;
+            document.getElementById('dashCalGoal').innerText = state.caloriesGoal;
+            const calPct = Math.min(100, Math.round((totalCalories / state.caloriesGoal) * 100));
+            document.getElementById('dashCalBar').style.width = `${calPct}%`;
+
+            // Nutrition Macros
+            document.getElementById('proteinText').innerText = `${totalProtein}g / ${state.proteinGoal}g`;
+            document.getElementById('proteinBar').style.width = `${Math.min(100, (totalProtein/state.proteinGoal)*100)}%`;
+
+            document.getElementById('carbsText').innerText = `${totalCarbs}g / ${state.carbsGoal}g`;
+            document.getElementById('carbsBar').style.width = `${Math.min(100, (totalCarbs/state.carbsGoal)*100)}%`;
+
+            document.getElementById('fatsText').innerText = `${totalFats}g / ${state.fatsGoal}g`;
+            document.getElementById('fatsBar').style.width = `${Math.min(100, (totalFats/state.fatsGoal)*100)}%`;
+
+            // Sleep
+            document.getElementById('dashSleepVal').innerText = state.sleep;
+            document.getElementById('dashSleepGoal').innerText = state.sleepGoal;
+            const sleepPct = Math.min(100, Math.round((state.sleep / state.sleepGoal) * 100));
+            document.getElementById('dashSleepBar').style.width = `${sleepPct}%`;
+
+            // Habits Streak
+            document.getElementById('streakDays').innerText = `${state.streak} дней`;
+        }
+
+        // --- WATER TRACKER ---
+        function addWater(amount) {
+            state.water = Math.max(0, state.water + amount);
+            saveState();
+        }
+
+        // --- STEPS TRACKER ---
+        function updateSteps(e) {
+            e.preventDefault();
+            const input = document.getElementById('stepInput');
+            const val = parseInt(input.value);
+            if (val > 0) {
+                state.steps += val;
+                state.weeklySteps[6] = state.steps; // Update today in weekly
+                input.value = '';
+                saveState();
+                drawWeeklyChart();
+            }
+        }
+
+        function quickAddSteps(val) {
+            state.steps += val;
+            state.weeklySteps[6] = state.steps;
+            saveState();
+            drawWeeklyChart();
+        }
+
+        // --- NUTRITION LOG ---
+        function addMeal(e) {
+            e.preventDefault();
+            const name = document.getElementById('mealName').value.trim();
+            const calories = parseInt(document.getElementById('mealCal').value) || 0;
+            const protein = parseInt(document.getElementById('mealProtein').value) || 0;
+            const carbs = parseInt(document.getElementById('mealCarbs').value) || 0;
+            const fats = parseInt(document.getElementById('mealFats').value) || 0;
+
+            if (name && calories > 0) {
+                state.meals.unshift({ id: Date.now(), name, calories, protein, carbs, fats });
+                document.getElementById('mealForm').reset();
+                saveState();
+                renderMeals();
+            }
+        }
+
+        function deleteMeal(id) {
+            state.meals = state.meals.filter(m => m.id !== id);
+            saveState();
+            renderMeals();
+        }
+
+        function renderMeals() {
+            const list = document.getElementById('mealList');
+            if (state.meals.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-sm">
+                        Приемы пищи еще не добавлены. Заполните форму слева.
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = state.meals.map(m => `
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 transition-all hover:border-slate-300 dark:hover:border-slate-700">
+                    <div>
+                        <div class="font-semibold text-sm text-slate-800 dark:text-white">${m.name}</div>
+                        <div class="text-xs text-slate-400 space-x-2 mt-0.5">
+                            <span>Б: ${m.protein}г</span>
+                            <span>У: ${m.carbs}г</span>
+                            <span>Ж: ${m.fats}г</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-sm text-orange-500">${m.calories} ккал</span>
+                        <button onclick="deleteMeal(${m.id})" class="text-slate-400 hover:text-red-500 transition-colors p-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- SLEEP LOG ---
+        let selectedSleepQual = 'Нормальное';
+        function selectSleepQuality(qual, btn) {
+            selectedSleepQual = qual;
+            document.querySelectorAll('.sleep-qual-btn').forEach(b => {
+                b.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-950/40', 'text-purple-600', 'dark:text-purple-400');
+                b.classList.add('border-slate-200', 'dark:border-slate-700');
+            });
+            btn.classList.remove('border-slate-200', 'dark:border-slate-700');
+            btn.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-950/40', 'text-purple-600', 'dark:text-purple-400');
+        }
+
+        function logSleep(e) {
+            e.preventDefault();
+            const hours = parseFloat(document.getElementById('sleepHours').value);
+            if (hours > 0) {
+                state.sleep = hours;
+                state.sleepQuality = selectedSleepQual;
+                state.weeklySleep[6] = hours;
+                saveState();
+                drawSleepChart();
+                alert('Данные о сне успешно обновлены!');
+            }
+        }
+
+        // --- BMI CALCULATOR ---
+        function calculateBMI() {
+            const h = parseFloat(document.getElementById('bmiHeight').value) / 100;
+            const w = parseFloat(document.getElementById('bmiWeight').value);
+
+            if (h > 0 && w > 0) {
+                const bmi = (w / (h * h)).toFixed(1);
+                document.getElementById('bmiValue').innerText = bmi;
+
+                const card = document.getElementById('bmiResultCard');
+                const badge = document.getElementById('bmiCategoryBadge');
+                const advice = document.getElementById('bmiAdviceText');
+
+                card.classList.remove('hidden');
+
+                if (bmi < 18.5) {
+                    badge.innerText = 'Дефицит массы';
+                    badge.className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+                    advice.innerText = 'У вас наблюдается недобор веса. Рекомендуется проконсультироваться с диетологом для составления профицитного рациона.';
+                } else if (bmi >= 18.5 && bmi < 25) {
+                    badge.innerText = 'Нормальный вес';
+                    badge.className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+                    advice.innerText = 'Отличный показатель! Ваш вес находится в здоровом диапазоне.';
+                } else if (bmi >= 25 && bmi < 30) {
+                    badge.innerText = 'Избыточный вес';
+                    badge.className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+                    advice.innerText = 'Небольшое превышение нормы. Рекомендуется увеличить физическую активность и пересмотреть рацион.';
+                } else {
+                    badge.innerText = 'Ожирение';
+                    badge.className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300';
+                    advice.innerText = 'Индекс массы значительно выше нормы. Рекомендуется консультация специалиста для подбора эффективного плана питания и тренировок.';
+                }
+            }
+        }
+
+        // --- HABITS TRACKER ---
+        function renderHabits() {
+            const list = document.getElementById('habitsList');
+            list.innerHTML = state.habits.map(h => `
+                <div onclick="toggleHabit(${h.id})" class="flex items-center justify-between p-4 rounded-xl border ${h.completed ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-500/30' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800'} cursor-pointer transition-all hover:scale-[1.01]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 rounded-lg border ${h.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600'} flex items-center justify-center transition-colors">
+                            ${h.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+                        </div>
+                        <span class="text-sm font-medium ${h.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-white'}">${h.title}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteHabit(${h.id})" class="text-slate-400 hover:text-red-500 transition-colors p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function toggleHabit(id) {
+            const habit = state.habits.find(h => h.id === id);
+            if (habit) {
+                habit.completed = !habit.completed;
+                saveState();
+                renderHabits();
+            }
+        }
+
+        function addNewHabit(e) {
+            e.preventDefault();
+            const input = document.getElementById('newHabitInput');
+            const title = input.value.trim();
+            if (title) {
+                state.habits.push({ id: Date.now(), title, completed: false });
+                input.value = '';
+                saveState();
+                renderHabits();
+            }
+        }
+
+        function deleteHabit(id) {
+            state.habits = state.habits.filter(h => h.id !== id);
+            saveState();
+            renderHabits();
+        }
+
+        // --- RESET DAY DATA ---
+        function resetDayData() {
+            if (confirm('Сбросить текущий прогресс за день (шаги, вода, питание)?')) {
+                state.water = 0;
+                state.steps = 0;
+                state.sleep = 0;
+                state.meals = [];
+                state.weeklySteps[6] = 0;
+                state.weeklySleep[6] = 0;
+                state.habits.forEach(h => h.completed = false);
+                saveState();
+                renderMeals();
+                renderHabits();
+                drawWeeklyChart();
+                drawSleepChart();
+            }
+        }
+
+        // --- CANVAS CHARTS ---
+        function drawWeeklyChart() {
+            const canvas = document.getElementById('weeklyChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const barColor = '#10b981';
+            const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            const data = state.weeklySteps;
+            const maxVal = Math.max(...data, 12000);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 40;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+            const barWidth = chartWidth / days.length - 16;
+
+            // Draw Bars
+            data.forEach((val, idx) => {
+                const x = padding + idx * (chartWidth / days.length) + 8;
+                const h = (val / maxVal) * chartHeight;
+                const y = canvas.height - padding - h;
+
+                // Bar Shadow / Background Glow
+                ctx.fillStyle = isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)';
+                ctx.beginPath();
+                ctx.roundRect(x, padding, barWidth, chartHeight, [8, 8, 8, 8]);
+                ctx.fill();
+
+                // Active Bar
+                ctx.fillStyle = barColor;
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth, h, [6, 6, 0, 0]);
+                ctx.fill();
+
+                // Text Labels (Days)
+                ctx.fillStyle = textColor;
+                ctx.font = '12px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(days[idx], x + barWidth / 2, canvas.height - 12);
+
+                // Value Label above bar
+                if (val > 0) {
+                    ctx.fillStyle = isDark ? '#e2e8f0' : '#334155';
+                    ctx.font = '10px Inter, sans-serif';
+                    ctx.fillText((val / 1000).toFixed(1) + 'k', x + barWidth / 2, y - 6);
+                }
+            });
+        }
+
+        function drawSleepChart() {
+            const canvas = document.getElementById('sleepChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const lineColor = '#8b5cf6';
+            const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            const data = state.weeklySleep;
+            const maxVal = 10;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 40;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+            const stepX = chartWidth / (days.length - 1);
+
+            // Draw Line Chart Path
+            ctx.beginPath();
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 3;
+
+            data.forEach((val, idx) => {
+                const x = padding + idx * stepX;
+                const y = canvas.height - padding - (val / maxVal) * chartHeight;
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw Points and Labels
+            data.forEach((val, idx) => {
+                const x = padding + idx * stepX;
+                const y = canvas.height - padding - (val / maxVal) * chartHeight;
+
+                // Point Circle
+                ctx.beginPath();
+                ctx.fillStyle = isDark ? '#0f172a' : '#ffffff';
+                ctx.strokeStyle = lineColor;
+                ctx.lineWidth = 3;
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Text Labels (Days)
+                ctx.fillStyle = textColor;
+                ctx.font = '12px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(days[idx], x, canvas.height - 12);
+
+                // Hours Value Label
+                if (val > 0) {
+                    ctx.fillStyle = isDark ? '#e2e8f0' : '#334155';
+                    ctx.font = '11px Inter, sans-serif';
+                    ctx.fillText(val + ' ч', x, y - 12);
+                }
+            });
+        }
+
+        // Handle Window Resize for Canvas Redraw
+        window.addEventListener('resize', () => {
+            drawWeeklyChart();
+            drawSleepChart();
+        });
+    </script>
+</body>
+</html>
